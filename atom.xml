@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://chenlimao.github.io</id>
+    <title>Chenlimao</title>
+    <updated>2022-09-22T12:53:01.962Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://chenlimao.github.io"/>
+    <link rel="self" href="https://chenlimao.github.io/atom.xml"/>
+    <subtitle>似虎能缘木,如驹不伏辕。</subtitle>
+    <logo>https://chenlimao.github.io/images/avatar.png</logo>
+    <icon>https://chenlimao.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2022, Chenlimao</rights>
+    <entry>
+        <title type="html"><![CDATA[.gitignore 忽略文件]]></title>
+        <id>https://chenlimao.github.io/post/xS9zbsBNfPaduZJhg3HO/</id>
+        <link href="https://chenlimao.github.io/post/xS9zbsBNfPaduZJhg3HO/">
+        </link>
+        <updated>2022-09-22T12:03:49.000Z</updated>
+        <summary type="html"><![CDATA[<p>㊙️.gitignore 文件中忽略项不起作用的解决方法</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>㊙️.gitignore 文件中忽略项不起作用的解决方法</p>
+<!-- more -->
+<h2 id="需求">需求</h2>
+<ul>
+<li><strong>希望忽略提交某个文件</strong></li>
+<li><strong>但是不删除本地文件跟远程仓库文件</strong></li>
+</ul>
+<h2 id="git库所在的文件夹中的文件大致有4种状态">git库所在的文件夹中的文件大致有4种状态</h2>
+<ul>
+<li>Untracked：<br>
+<strong>未跟踪, 此文件在文件夹中, 但并没有加入到git库, 不参与版本控制. 通过git add 状态变为Staged</strong></li>
+<li>Staged：<br>
+<strong>暂存状态. 执行git commit则将修改同步到库中, 这时库中的文件和本地文件又变为一致, 文件为Unmodify状态.执行git reset HEAD filename取消暂存, 文件状态为Modified</strong></li>
+<li>Unmodify：<br>
+<strong>文件已经入库, 未修改, 即版本库中的文件快照内容与文件夹中完全一致. 这种类型的文件有两种去处, 如果它被修改,而变为Modified. 如果使用git rm移出版本库, 则成为Untracked文件</strong></li>
+<li>Modified：<br>
+<strong>文件已修改, 仅仅是修改, 并没有进行其他的操作. 这个文件也有两个去处, 通过git add可进入暂存staged状态,使用git checkout 则丢弃修改过, 返回到unmodify状态, 这个git checkout即从库中取出文件, 覆盖当前修改</strong></li>
+</ul>
+<h2 id="git-状态-untracked-和-not-staged的区别">Git 状态 untracked 和 not staged的区别</h2>
+<ul>
+<li>untrack     表示是新文件，没有被add过，是为跟踪的意思。</li>
+<li>not staged  表示add过的文件，即跟踪文件，再次修改没有add，就是没有暂存的意思</li>
+</ul>
+<h2 id="需要特别注意的是">需要特别注意的是：</h2>
+<ul>
+<li>.gitignore只能忽略那些原来没有被track的文件，如果某些文件已经被纳入了版本管理中，则修改.gitignore是无效的。</li>
+<li>想要.gitignore起作用，必须要在这些文件不在暂存区中才可以，.gitignore文件只是忽略没有被staged(cached)文件，对于已经被staged文件，加入.gitignore文件时一定要先从staged移除，才可以忽略。</li>
+</ul>
+<h2 id="git忽略文件的常用方法">git忽略文件的常用方法</h2>
+<ul>
+<li>1、git通常在.gitignore文件进行配置，来忽略本地文件。但是这仅对于重来没有提交过的文件有效。<a href="#one"><font color="#00dd00">解决方法一</font></a></li>
+<li>2、使用git update-index --skip-worktree path设置标识，使git忽略对应的文件。<a href="#two"><font color="#00dd00">解决方法二</font></a></li>
+<li>3、使用git update-index --assume-unchanged path设置标识，使git忽略对应的文件。</li>
+</ul>
+<h2 id="skip-worktree和assume-nochanged的差别">skip-worktree和assume-nochanged的差别</h2>
+<ul>
+<li>使用 git update-index --skip-worktree [file] 可以实现修改本地文件不会被提交，但又可以拉取最新更改的需求。适用于一些不经常变动，但是必须本地化设置的文件。</li>
+<li>git update-index --assume-unchanged [file] 该命令只是假设文件没有变动，使用reset时，会将文件修改回去。</li>
+</ul>
+<h2 id="h6-idone解决方法一h6"><h6 id='one'>解决方法一</h6></h2>
+<p><strong>比如我们不想提交根路径（有.git文件的文件夹路径）下的env/version.js 版本js文件</strong></p>
+<ul>
+<li>1、移除所有状态为Staged的文件或者移除单个状态为Staged的文件</li>
+</ul>
+<pre><code># 预览要移除的文件
+git rm -r -n --cached .
+# 移除所有文件
+git rm -r --cached .
+
+# 预览要移除的文件
+git rm -r -n --cached ./env/version.js
+# 移除单个文件
+git rm -r --cached ./env/version.js
+</code></pre>
+<ul>
+<li>2、在.gitignore文件进行配置，来忽略本地文件(此步骤可以在步骤一前操作)</li>
+</ul>
+<pre><code>env/version.js
+</code></pre>
+<ul>
+<li>3、提交最新的文件</li>
+</ul>
+<pre><code># 提交代码到本地
+git add .
+
+# 提交到远程仓库
+git commit -m 'update .gitignore'
+</code></pre>
+<ul>
+<li>4、这样会出现一个问题<br>
+<strong>当前操作会在远程仓库里面把忽略的文件删除，也就是git会忽略提交当前文件，但是远程仓库也不会存在这个文件，所以只实现第一个需求</strong></li>
+</ul>
+<h2 id="h6-idtwo解决方法二h6"><h6 id='two'>解决方法二</h6></h2>
+<p><strong>使用git update-index --skip-worktree path设置标识，使git忽略对应的文件。</strong><br>
+<strong>此方法不会删除远程仓库文件，又能忽略git提交</strong></p>
+<pre><code># 忽略文件
+git update-index --skip-worktree ./env/version.js
+
+# 撤消
+git update-index --no-skip-worktree ./env/version.js
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[微信小程序解密并解包获取源码教程]]></title>
+        <id>https://chenlimao.github.io/post/dPa!EpCOmN3lgLse4c9X/</id>
+        <link href="https://chenlimao.github.io/post/dPa!EpCOmN3lgLse4c9X/">
+        </link>
+        <updated>2022-09-13T13:06:17.000Z</updated>
+        <summary type="html"><![CDATA[<p>微信小程序解密并解包获取源码教程</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>微信小程序解密并解包获取源码教程</p>
+<!-- more -->
+<h2 id="在电脑端提取微信小程序包">在电脑端提取微信小程序包</h2>
+<p><img src="https://chenlimao.github.io/post-images/1663074886492.png" alt="" loading="lazy"><br>
+<strong>由于我修改过微信app缓存文件路径，所以请勿对照以上图片路径，请使用下面的路径</strong><br>
+<code>C:Users/电脑用户名/Documents/WeChat Files/Applet/{{小程序AppID}}/{{随机产生的数字}}/\__APP__.wxapkg 找到小程序源码</code></p>
+<p><strong>当前文件夹的小程序文件是安装你打开小程序的时间排序的，一般拿第一个就行了</strong><br>
+<img src="https://chenlimao.github.io/post-images/1663075059038.png" alt="" loading="lazy"></p>
+<p><strong>如果真不知道是哪个文件夹，可以在手机上查看小程序的AppID，然后找到对应的文件夹</strong><br>
+<img src="https://chenlimao.github.io/post-images/1663075297679.png" alt="1" loading="lazy"><br>
+<img src="https://chenlimao.github.io/post-images/1663075300508.png" alt="2" loading="lazy"><br>
+<img src="https://chenlimao.github.io/post-images/1663075303753.png" alt="3" loading="lazy"></p>
+<h2 id="下载解密解包工具">下载解密+解包工具</h2>
+<pre><code>git clone https://github.com/superBiuBiuMan/wechatMiniAppReverse
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://chenlimao.github.io/post-images/1663076755463.png" alt="" loading="lazy"></figure>
+<h2 id="解密wxapkg包">解密wxapkg包</h2>
+<p><strong>电脑端拿到的wxapkg是加密的，所以要先解密</strong><br>
+<strong>wechatMiniAppReverse\1.first ==》这个为解密软件，里面有教程，不细讲</strong><br>
+<img src="https://chenlimao.github.io/post-images/1663076928410.png" alt="" loading="lazy"></p>
+<p><strong>解密完成会输出一个.wxapkg文件，等下这个文件要拿来解包</strong></p>
+<h2 id="解包">解包</h2>
+<p><strong>解密完成的文件不能在微信开发者工具里面调试，所以要解包，生成小程序开发常见的文件</strong><br>
+<strong>wechatMiniAppReverse\2.second\nodejs ==》这个为解包软件，里面有教程，不细讲</strong><br>
+<img src="https://chenlimao.github.io/post-images/1663077118741.png" alt="" loading="lazy"></p>
+<p><strong>注意两点</strong></p>
+<ul>
+<li>删除掉以下图片里面的文件，这个会导致依赖安装失败<br>
+<img src="https://chenlimao.github.io/post-images/1663077318974.png" alt="" loading="lazy"></li>
+<li>\nodejs文件夹里面要安装依赖<strong>npm install</strong>，因为解包程序使用到很多npm 模块</li>
+</ul>
+<h2 id="最后">最后</h2>
+<p><strong>最后解包完成的文件夹就是小程序源码，直接在微信开发者工具里面打开就行了</strong></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Chrome导入密码]]></title>
+        <id>https://chenlimao.github.io/post/WpOwRS9Qvg$BXlxaY6E4/</id>
+        <link href="https://chenlimao.github.io/post/WpOwRS9Qvg$BXlxaY6E4/">
+        </link>
+        <updated>2022-09-09T13:40:45.000Z</updated>
+        <summary type="html"><![CDATA[<p>谷歌浏览器导入密码的两种方法</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>谷歌浏览器导入密码的两种方法</p>
+<!-- more -->
+<h2 id="方法一">方法一</h2>
+<p><strong>打开Google在新标签页输入chrome://flags/#password-import-export并进行回车，状态改为启用状态Enabled</strong><br>
+<img src="https://chenlimao.github.io/post-images/1662730980106.png" alt="" loading="lazy"></p>
+<h2 id="方法二">方法二</h2>
+<p><strong>右键→属性→目标（T）</strong><br>
+<img src="https://chenlimao.github.io/post-images/1662731189829.png" alt="" loading="lazy"></p>
+<p>在目标内容后输入以下内容，<strong>前面有个空格符号别漏了</strong>→点击确定→继续重新打开Chrome<br>
+<code> --enable-features=PasswordImport</code><br>
+<img src="https://chenlimao.github.io/post-images/1662731063688.png" alt="" loading="lazy"></p>
+<h2 id="导入密码">导入密码</h2>
+<p><strong>右上角按钮→设置→自动填充→密码（点击进入）→已保存的密码右后方按钮→导入密码→选择要导入的密码文件（xxx.csv）→密码导入成功并展示</strong><br>
+<img src="https://chenlimao.github.io/post-images/1662731429082.png" alt="" loading="lazy"><br>
+<img src="https://chenlimao.github.io/post-images/1662731431984.png" alt="" loading="lazy"></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Github Pages访问太慢？通过Netlify免费加速]]></title>
+        <id>https://chenlimao.github.io/post/1bwzAi#O0&amp;h$SxnGZWga/</id>
+        <link href="https://chenlimao.github.io/post/1bwzAi#O0&amp;h$SxnGZWga/">
+        </link>
+        <updated>2022-09-09T13:11:02.000Z</updated>
+        <summary type="html"><![CDATA[<p>🍺<strong>Github Pages</strong>为<strong>Github</strong>提供的一项静态站点托管服务，它直接从<strong>Github</strong>仓库获取静态文件进行发布，然后提供一个<strong>github.io</strong>的二级域名供用户访问，支持绑定自定义域名，支持开启HTTPS，开启HTTPS会自动申请证书同时在证书过期前自动续签，这一切都是<strong>免费</strong>的，使用极其简单，只需要将你的静态文件提交到<strong>Github</strong>，然后开启Pages服务即可，我的博客就托管于<strong>Github Pages</strong></p>
+<p>🍻但是有个问题，国内访问速度很慢，如果你有梯子另当别论，但是你不可能要求访问网站的用户都有，所以要用到以下这个工具 <strong>Netlify</strong></p>
+]]></summary>
+        <content type="html"><![CDATA[<p>🍺<strong>Github Pages</strong>为<strong>Github</strong>提供的一项静态站点托管服务，它直接从<strong>Github</strong>仓库获取静态文件进行发布，然后提供一个<strong>github.io</strong>的二级域名供用户访问，支持绑定自定义域名，支持开启HTTPS，开启HTTPS会自动申请证书同时在证书过期前自动续签，这一切都是<strong>免费</strong>的，使用极其简单，只需要将你的静态文件提交到<strong>Github</strong>，然后开启Pages服务即可，我的博客就托管于<strong>Github Pages</strong></p>
+<p>🍻但是有个问题，国内访问速度很慢，如果你有梯子另当别论，但是你不可能要求访问网站的用户都有，所以要用到以下这个工具 <strong>Netlify</strong></p>
+<!-- more -->
+<h2 id="注册netlify">注册Netlify</h2>
+<p><a href="https://app.netlify.com/signup">注册网址</a><br>
+<em>打开Netlify官网，点击右上角的Sign up注册账号，这里推荐关联Github账号</em><br>
+<img src="https://chenlimao.github.io/post-images/1662729441835.png" alt="" loading="lazy"></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Gridea+GitHub Desktop 同步代码]]></title>
+        <id>https://chenlimao.github.io/post/D0fagHZVRvUsMrIi!mWj/</id>
+        <link href="https://chenlimao.github.io/post/D0fagHZVRvUsMrIi!mWj/">
+        </link>
+        <updated>2022-09-09T10:18:46.000Z</updated>
+        <summary type="html"><![CDATA[<h2 id="缘由">缘由</h2>
+<p>Gridea+Github 同步代码老是失败</p>
+]]></summary>
+        <content type="html"><![CDATA[<h2 id="缘由">缘由</h2>
+<p>Gridea+Github 同步代码老是失败</p>
+<!-- more -->
+<h2 id="错误提示">错误提示</h2>
+<pre><code>同步遇到了错误，请查阅 FAQ 或 Issues 来寻找解决方案
+</code></pre>
+<h2 id="错误原因">错误原因</h2>
+<pre><code>1、Github是国外网站，DDDD
+2、用了梯子也没用，好像Gridea不支持，有懂得大佬可以留言
+</code></pre>
+<h2 id="解决办法">解决办法</h2>
+<pre><code>使用Github 桌面端+梯子手动上传代码
+</code></pre>
+<h2 id="例子">例子</h2>
+<h3 id="下载github-desktop">下载GitHub Desktop</h3>
+<p><a href="https://desktop.github.com/">下载地址</a><br>
+<em>双击直接安装就行了</em></p>
+<h3 id="clone-github-项目到本地">clone github 项目到本地</h3>
+<p><em>点击clone 项目命令</em><br>
+<img src="https://chenlimao.github.io/post-images/1662722925880.png" alt="" loading="lazy"><br>
+<em>按照下图设置</em><br>
+<em>报错是因为你的output文件已经有文件了，清空output文件夹就行了</em><br>
+<em>点击clone按钮下载远程仓库代码</em><br>
+<img src="https://chenlimao.github.io/post-images/1662722953166.png" alt="" loading="lazy"></p>
+<h3 id="配置gridea-邮箱">配置Gridea 邮箱</h3>
+<p><em>邮箱跟你Github账户的邮箱一致就行了</em><br>
+<img src="https://chenlimao.github.io/post-images/1662723211017.png" alt="" loading="lazy"><br>
+<em>原因是Gridea每次同步代码都会重置.git文件夹里面的配置（我猜的），导致跟GitHub Desktop客户端配置不一致，导致文件上传不了，缺少邮箱配置</em><br>
+<img src="https://chenlimao.github.io/post-images/1662723321906.png" alt="" loading="lazy"></p>
+<h3 id="上传代码">上传代码</h3>
+<p><strong>注意：点击同步按钮，不要点击预览不要点击预览不要点击预览，预览按钮会清除output文件夹的.git文件</strong><br>
+<img src="https://chenlimao.github.io/post-images/1662723729992.png" alt="" loading="lazy"><br>
+<em>最后用GitHub Desktop上传代码就行了</em></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[GitHub Desktop clone到本地报错]]></title>
+        <id>https://chenlimao.github.io/post/kJ8R39M7ZGL2t!ow4nu%/</id>
+        <link href="https://chenlimao.github.io/post/kJ8R39M7ZGL2t!ow4nu%/">
+        </link>
+        <updated>2022-09-09T09:06:01.000Z</updated>
+        <summary type="html"><![CDATA[<h2 id="报错提示">报错提示</h2>
+<pre><code>This folder contains files. Git can only clone to empty folders.
+此文件夹包含文件。Git只能克隆到空文件夹。
+</code></pre>
+]]></summary>
+        <content type="html"><![CDATA[<h2 id="报错提示">报错提示</h2>
+<pre><code>This folder contains files. Git can only clone to empty folders.
+此文件夹包含文件。Git只能克隆到空文件夹。
+</code></pre>
+<!-- more -->
+<h2 id="报错原因">报错原因</h2>
+<pre><code>选中的文件夹已经有内容了，删掉当前文件夹或者清空文件夹即可
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[GitHub Desktop push origin报错]]></title>
+        <id>https://chenlimao.github.io/post/igzwVu5HQ2lUbB&amp;Tp^Y6/</id>
+        <link href="https://chenlimao.github.io/post/igzwVu5HQ2lUbB&amp;Tp^Y6/">
+        </link>
+        <updated>2022-09-09T08:41:22.000Z</updated>
+        <summary type="html"><![CDATA[<p>报错提示</p>
+<pre><code>failed to receive handshake ssl/tls connection failed
+</code></pre>
+]]></summary>
+        <content type="html"><![CDATA[<p>报错提示</p>
+<pre><code>failed to receive handshake ssl/tls connection failed
+</code></pre>
+<!-- more -->
+<h2 id="解决办法">解决办法</h2>
+<p><em>打开git bash，运行下面两句代码</em></p>
+<pre><code>$ git config --global http.sslBackend &quot;openssl&quot;
+$ git config --global http.sslCAInfo [path to .pem file]
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[「pnpm」高性能的 npm  ]]></title>
+        <id>https://chenlimao.github.io/post/VTrC20ct29vO9eadV9ac/</id>
+        <link href="https://chenlimao.github.io/post/VTrC20ct29vO9eadV9ac/">
+        </link>
+        <updated>2022-09-01T14:15:39.000Z</updated>
+        <summary type="html"><![CDATA[<p>performant npm ，意味“高性能的 npm”</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>performant npm ，意味“高性能的 npm”</p>
+<!-- more -->
+<h3 id="概念">概念</h3>
+<p>performant npm ，意味“高性能的 npm”。pnpm由npm/yarn衍生而来，解决了npm/yarn内部潜在的bug，极大的优化了性能，扩展了使用场景。被誉为“最先进的包管理工具”</p>
+<h3 id="特点">特点</h3>
+<p>速度快、节约磁盘空间、支持monorepo、安全性高</p>
+<p>pnpm 相比较于 yarn/npm 这两个常用的包管理工具在性能上也有了极大的提升，根据目前官方提供的 benchmark 数据可以看出在一些综合场景下比 npm/yarn 快了大概两倍。</p>
+<h3 id="存储管理">存储管理</h3>
+<p>按内容寻址、采用symlink</p>
+<h3 id="依赖管理">依赖管理</h3>
+<p>npm1、npm2采用递归管理，npm3、npm3+、yarn依赖扁平化管理消除依赖提升。</p>
+<p>pnpm依赖策略：消除依赖提升、规范拓扑结构</p>
+<h3 id="安全">安全</h3>
+<p>之前在使用 npm/yarn 的时候，由于 node_module 的扁平结构，如果 A 依赖 B， B 依赖 C，那么 A 当中是可以直接使用 C 的，但问题是 A 当中并没有声明 C 这个依赖。因此会出现这种非法访问的情况。 但 pnpm 自创了一套依赖管理方式，很好地解决了这个问题，保证了安全性。</p>
+<h3 id="安装">安装</h3>
+<pre><code>npm i pnpm -g
+</code></pre>
+<h3 id="查看版本信息">查看版本信息</h3>
+<pre><code>pnpm -v
+</code></pre>
+<h3 id="升级版本">升级版本</h3>
+<pre><code>pnpm add -g pnpm to update 
+</code></pre>
+<h3 id="设置淘宝源">设置淘宝源</h3>
+<pre><code>//  查看源
+pnpm config get registry 
+
+//  切换淘宝源 
+pnpm config set registry https://registry.npmmirror.com 
+</code></pre>
+<h3 id="安装项目依赖">安装项目依赖</h3>
+<pre><code>安装项目依赖
+</code></pre>
+<h3 id="运行项目">运行项目</h3>
+<pre><code>pnpm run dev
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[微信开发者工具不会自动编译]]></title>
+        <id>https://chenlimao.github.io/post/aEpugT4oI4vlQCingZKZ/</id>
+        <link href="https://chenlimao.github.io/post/aEpugT4oI4vlQCingZKZ/">
+        </link>
+        <updated>2022-09-01T09:00:47.000Z</updated>
+        <summary type="html"><![CDATA[<p>vscode 修改代码 微信开发者工具不会自动编译解决方法</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>vscode 修改代码 微信开发者工具不会自动编译解决方法</p>
+<!-- more -->
+<h2 id="微信开发者工具-文件-自动保存-取消勾选">微信开发者工具  -&gt;  文件  -&gt;  自动保存 （取消勾选）</h2>
+<figure data-type="image" tabindex="1"><img src="https://chenlimao.github.io/post-images/1662023032708.png" alt="" loading="lazy"></figure>
+<h2 id="微信开发者工具-设置-编辑器设置">微信开发者工具  -&gt;  设置  -&gt;  编辑器设置</h2>
+<p><img src="https://chenlimao.github.io/post-images/1662023068217.png" alt="1" loading="lazy"><br>
+<img src="https://chenlimao.github.io/post-images/1662023072047.png" alt="2" loading="lazy"></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Hello Gridea]]></title>
+        <id>https://chenlimao.github.io/post/hello-gridea/</id>
+        <link href="https://chenlimao.github.io/post/hello-gridea/">
+        </link>
+        <updated>2018-12-11T16:00:00.000Z</updated>
+        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+<!-- more -->
+<p><a href="https://github.com/getgridea/gridea">Github</a><br>
+<a href="https://gridea.dev/">Gridea 主页</a><br>
+<a href="https://fehey.com/">示例网站</a></p>
+<h2 id="特性">特性👇</h2>
+<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
+<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
+<p>🏷️  你可以对文章进行标签分组</p>
+<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
+<p>💻  你可以在 <strong>Windows</strong>，<strong>MacOS</strong> 或 <strong>Linux</strong> 设备上使用此客户端</p>
+<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
+<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
+<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
+<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
+<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
+<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前 🏃</p>
+<p>未来，它一定会成为你离不开的伙伴</p>
+<p>尽情发挥你的才华吧！</p>
+<p>😘 Enjoy~</p>
+]]></content>
+    </entry>
+</feed>
